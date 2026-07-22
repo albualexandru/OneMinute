@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exercises</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="page">
+        <h1>Exercises</h1>
+        <p>Things to practice in your free time.</p>
+      </header>
+
+      <div id="list" class="exercise-list"></div>
+    </div>
+
+    <script src="exercises.js"></script>
+    <script>
+      const list = document.getElementById("list");
+
+      if (!window.EXERCISES || window.EXERCISES.length === 0) {
+        list.innerHTML = '<p class="empty">No exercises yet.</p>';
+      } else {
+        for (const ex of window.EXERCISES) {
+          const a = document.createElement("a");
+          a.className = "exercise-card";
+          a.href = "exercise.html?id=" + encodeURIComponent(ex.id);
+
+          const h2 = document.createElement("h2");
+          h2.textContent = ex.title;
+
+          const p = document.createElement("p");
+          p.textContent = ex.description || "";
+
+          const tag = document.createElement("span");
+          tag.className = "tag";
+          tag.textContent = ex.type;
+
+          a.append(h2, p, tag);
+          list.append(a);
+        }
+      }
+    </script>
+  </body>
+</html>

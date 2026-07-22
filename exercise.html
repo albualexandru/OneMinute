@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exercise</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="back" href="index.html">&larr; All exercises</a>
+
+      <header class="page">
+        <h1 id="title">Exercise</h1>
+        <p id="description"></p>
+      </header>
+
+      <div id="body"></div>
+    </div>
+
+    <script src="exercises.js"></script>
+    <script>
+      function getExercise() {
+        const id = new URLSearchParams(location.search).get("id");
+        return (window.EXERCISES || []).find((e) => e.id === id);
+      }
+
+      function formatTime(ms) {
+        const totalSeconds = ms / 1000;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds - minutes * 60;
+        if (minutes > 0) {
+          return minutes + "m " + seconds.toFixed(2) + "s";
+        }
+        return seconds.toFixed(2) + "s";
+      }
+
+      function renderTimedReading(ex, container) {
+        const text = document.createElement("div");
+        text.className = "exercise-text";
+        text.textContent = ex.text;
+
+        const controls = document.createElement("div");
+        controls.className = "controls";
+
+        const btn = document.createElement("button");
+        btn.className = "action";
+        btn.textContent = "Start";
+
+        const result = document.createElement("div");
+        result.className = "result";
+
+        controls.append(btn, result);
+
+        const hint = document.createElement("p");
+        hint.className = "hint";
+        hint.textContent =
+          "Press Start, speak the text, then press Stop. The timer runs hidden.";
+
+        container.append(text, controls, hint);
+
+        let running = false;
+        let startTime = 0;
+
+        btn.addEventListener("click", () => {
+          if (!running) {
+            running = true;
+            startTime = performance.now();
+            btn.textContent = "Stop";
+            btn.classList.add("running");
+            result.innerHTML = "";
+          } else {
+            const elapsed = performance.now() - startTime;
+            running = false;
+            btn.textContent = "Start";
+            btn.classList.remove("running");
+            result.innerHTML =
+              'Your time: <span class="time">' +
+              formatTime(elapsed) +
+              "</span>";
+          }
+        });
+      }
+
+      function renderBoxBreathing(ex, container) {
+        const inhale = ex.inhale ?? 4;
+        const hold1 = ex.hold ?? 4;
+        const exhaleBase = ex.exhaleBase ?? 4;
+        const hold2 = ex.hold2 ?? 4;
+
+        // Phases for a given iteration (exhale grows each round).
+        function phasesFor(iteration) {
+          return [
+            { name: "Inhale", kind: "inhale", duration: inhale },
+            { name: "Hold", kind: "hold", duration: hold1 },
+            { name: "Exhale", kind: "exhale", duration: exhaleBase * iteration },
+            { name: "Hold", kind: "hold-empty", duration: hold2 },
+          ];
+        }
+
+        const stage = document.createElement("div");
+        stage.className = "breath-stage";
+
+        const circle = document.createElement("div");
+        circle.className = "breath-circle";
+
+        const inner = document.createElement("div");
+        inner.className = "breath-inner";
+
+        const stepEl = document.createElement("div");
+        stepEl.className = "breath-step";
+        stepEl.textContent = "Ready";
+
+        const remainEl = document.createElement("div");
+        remainEl.className = "breath-remain";
+        remainEl.textContent = "";
+
+        inner.append(stepEl, remainEl);
+        circle.append(inner);
+        stage.append(circle);
+
+        const iterEl = document.createElement("p");
+        iterEl.className = "hint";
+        iterEl.textContent = "";
+
+        const controls = document.createElement("div");
+        controls.className = "controls";
+
+        const btn = document.createElement("button");
+        btn.className = "action";
+        btn.textContent = "Start";
+        controls.append(btn);
+
+        const hint = document.createElement("p");
+        hint.className = "hint";
+        hint.textContent =
+          "Follow the step shown. Each round the exhale gets a little longer.";
+
+        container.append(stage, iterEl, controls, hint);
+
+        let running = false;
+        let rafId = null;
+        let iteration = 1;
+        let phases = phasesFor(iteration);
+        let phaseIndex = 0;
+        let phaseStart = 0;
+
+        function applyPhase(phase, progress) {
+          circle.classList.remove(
+            "inhale",
+            "hold",
+            "exhale",
+            "hold-empty"
+          );
+          circle.classList.add(phase.kind);
+          // Scale the circle: grow on inhale, shrink on exhale, hold steady.
+          let scale = 0.55;
+          if (phase.kind === "inhale") scale = 0.55 + 0.45 * progress;
+          else if (phase.kind === "hold") scale = 1;
+          else if (phase.kind === "exhale") scale = 1 - 0.45 * progress;
+          else if (phase.kind === "hold-empty") scale = 0.55;
+          circle.style.transform = "scale(" + scale.toFixed(3) + ")";
+        }
+
+        function loop() {
+          if (!running) return;
+          const now = performance.now();
+          let phase = phases[phaseIndex];
+          let elapsed = (now - phaseStart) / 1000;
+
+          while (elapsed >= phase.duration) {
+            phaseStart += phase.duration * 1000;
+            phaseIndex++;
+            if (phaseIndex >= phases.length) {
+              iteration++;
+              phaseIndex = 0;
+              phases = phasesFor(iteration);
+            }
+            phase = phases[phaseIndex];
+            elapsed = (now - phaseStart) / 1000;
+          }
+
+          const remaining = Math.max(0, phase.duration - elapsed);
+          const progress = phase.duration > 0 ? elapsed / phase.duration : 1;
+
+          stepEl.textContent = phase.name;
+          remainEl.textContent = Math.ceil(remaining) + "s";
+          iterEl.textContent =
+            "Round " + iteration + " · exhale " + phasesFor(iteration)[2].duration + "s";
+          applyPhase(phase, Math.min(1, progress));
+
+          rafId = requestAnimationFrame(loop);
+        }
+
+        function start() {
+          running = true;
+          iteration = 1;
+          phases = phasesFor(iteration);
+          phaseIndex = 0;
+          phaseStart = performance.now();
+          btn.textContent = "Stop";
+          btn.classList.add("running");
+          loop();
+        }
+
+        function stop() {
+          running = false;
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = null;
+          btn.textContent = "Start";
+          btn.classList.remove("running");
+          stepEl.textContent = "Done";
+          remainEl.textContent = "";
+          iterEl.textContent = "";
+          circle.style.transform = "scale(0.55)";
+          circle.classList.remove("inhale", "hold", "exhale", "hold-empty");
+        }
+
+        btn.addEventListener("click", () => {
+          if (!running) start();
+          else stop();
+        });
+      }
+
+      const renderers = {
+        "timed-reading": renderTimedReading,
+        "box-breathing": renderBoxBreathing,
+      };
+
+      const ex = getExercise();
+      const body = document.getElementById("body");
+
+      if (!ex) {
+        document.getElementById("title").textContent = "Not found";
+        body.innerHTML =
+          '<p class="empty">That exercise doesn\'t exist. <a href="index.html">Go back</a>.</p>';
+      } else {
+        document.title = ex.title;
+        document.getElementById("title").textContent = ex.title;
+        document.getElementById("description").textContent =
+          ex.description || "";
+
+        const render = renderers[ex.type];
+        if (render) {
+          render(ex, body);
+        } else {
+          body.innerHTML =
+            '<p class="empty">Unknown exercise type: ' + ex.type + "</p>";
+        }
+      }
+    </script>
+  </body>
+</html>
