@@ -42,11 +42,11 @@ Sunt mișto vârfurile ghearelor piciorușelor puricilor penelor pitulicii cuibu
     id: "box-breathing",
     title: "Box breathing (growing exhale)",
     description:
-      "Inhale 4 · hold 4 · exhale 4×iteration · hold 4. The exhale gets longer with each round.",
+      "Inhale 4 · hold 4 · exhale 8×iteration · hold 4. The exhale gets longer with each round.",
     type: "box-breathing",
     inhale: 4,
     hold: 4,
-    exhaleBase: 4,
+    exhaleBase: 8,
     hold2: 4,
   },
 ];
