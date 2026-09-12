@@ -86,6 +86,7 @@
         const inhale = ex.inhale ?? 4;
         const hold1 = ex.hold ?? 4;
         const exhaleBase = ex.exhaleBase ?? 4;
+        const exhaleStep = ex.exhaleStep ?? 4;
         const hold2 = ex.hold2 ?? 4;
 
         // Phases for a given iteration (exhale grows each round).
@@ -93,7 +94,11 @@
           return [
             { name: "Inhale", kind: "inhale", duration: inhale },
             { name: "Hold", kind: "hold", duration: hold1 },
-            { name: "Exhale", kind: "exhale", duration: exhaleBase * iteration },
+            {
+              name: "Exhale",
+              kind: "exhale",
+              duration: exhaleBase + (iteration - 1) * exhaleStep,
+            },
             { name: "Hold", kind: "hold-empty", duration: hold2 },
           ];
         }
