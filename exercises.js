@@ -7,8 +7,8 @@
 //                      The running counter is hidden while timing.
 //   "box-breathing" — guided box breathing. Shows the current breath step and
 //                      the seconds remaining. Exhale grows each iteration:
-//                      exhale = exhaleBase * iteration.
-//                      Fields: inhale, hold, exhaleBase, hold2 (all seconds).
+//                      exhale = exhaleBase + (iteration - 1) * exhaleStep.
+//                      Fields: inhale, hold, exhaleBase, exhaleStep, hold2 (all seconds).
 
 const EXERCISES = [
   {
@@ -42,11 +42,12 @@ Sunt mișto vârfurile ghearelor piciorușelor puricilor penelor pitulicii cuibu
     id: "box-breathing",
     title: "Box breathing (growing exhale)",
     description:
-      "Inhale 4 · hold 4 · exhale 8×iteration · hold 4. The exhale gets longer with each round.",
+      "Inhale 4 · hold 4 · exhale 8s then +4s each round (8, 12, 16, 20…) · hold 4. The exhale gets longer with each round.",
     type: "box-breathing",
     inhale: 4,
     hold: 4,
     exhaleBase: 8,
+    exhaleStep: 4,
     hold2: 4,
   },
 ];
